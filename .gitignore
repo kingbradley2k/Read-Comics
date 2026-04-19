@@ -1,0 +1,19 @@
+.DS_Store
+
+# Xcode user data
+*.xcuserstate
+xcuserdata/
+Read-It-All.xcodeproj/xcuserdata/
+Read-It-All.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Build products
+build/
+DerivedData/
+Packages/*/build/
+Packages/*/.swiftpm/
+
+# Nested package repositories
+Packages/*/.git/
+
+# Swift Package Manager
+.swiftpm/
