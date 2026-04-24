@@ -1,0 +1,48 @@
+name: read_comics_flutter
+description: Cross-platform comic reader - Flutter port of Read-It-All.
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  provider: ^6.1.1
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.2
+  file_picker: ^6.1.1
+  archive: ^3.4.10
+  pdf_render: ^1.4.2
+  image: ^4.1.7
+  shared_preferences: ^2.2.2
+  permission_handler: ^11.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.7
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  # To add assets:
+  # assets:
+  #   - images/
+  #   - images/a7t.jpg
+
+  # To add custom fonts:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+
