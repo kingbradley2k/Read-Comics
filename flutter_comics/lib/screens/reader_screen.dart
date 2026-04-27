@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/comic_models.dart';
+import '../models/reading_preferences.dart';
 import '../services/comic_library_service.dart';
 import '../widgets/comic_page_view.dart';
 
@@ -17,6 +18,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   late final PageController _pageController;
   late int _currentPage;
   bool _controlsVisible = true;
+  ReadingPreferences? _prefs;
 
   @override
   void initState() {
@@ -25,6 +27,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final progress = service.progressFor(widget.chapter.id);
     _currentPage = progress.pageIndex;
     _pageController = PageController(initialPage: _currentPage);
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await ReadingPreferences.load();
+    setState(() => _prefs = prefs);
   }
 
   @override
@@ -47,10 +55,32 @@ class _ReaderScreenState extends State<ReaderScreen> {
     setState(() => _controlsVisible = !_controlsVisible);
   }
 
+  void _toggleDirection() {
+    if (_prefs == null) return;
+    setState(() {
+      _prefs!.direction = _prefs!.direction == ReadingDirection.leftToRight
+          ? ReadingDirection.rightToLeft
+          : ReadingDirection.leftToRight;
+    });
+    _prefs!.save();
+  }
+
+  void _toggleFitMode() {
+    if (_prefs == null) return;
+    setState(() {
+      _prefs!.fitMode = _prefs!.fitMode == PageFitMode.fitWidth
+          ? PageFitMode.fitPage
+          : PageFitMode.fitWidth;
+    });
+    _prefs!.save();
+  }
+
   @override
   Widget build(BuildContext context) {
     final pageCount = widget.chapter.pageCount ?? 1;
     final theme = Theme.of(context);
+    final prefs = _prefs;
+    final isRtl = prefs?.direction == ReadingDirection.rightToLeft;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -64,10 +94,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
               controller: _pageController,
               onPageChanged: _onPageChanged,
               itemCount: pageCount,
+              reverse: isRtl,
               itemBuilder: (context, index) {
                 return ComicPageView(
                   chapter: widget.chapter,
                   pageIndex: index,
+                  fitMode: prefs?.fitMode ?? PageFitMode.fitPage,
                 );
               },
             ),
@@ -92,6 +124,24 @@ class _ReaderScreenState extends State<ReaderScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (prefs != null)
+                        IconButton(
+                          icon: Icon(
+                            isRtl ? Icons.format_textdirection_r_to_l : Icons.format_textdirection_l_to_r,
+                            color: Colors.white,
+                          ),
+                          tooltip: isRtl ? 'RTL' : 'LTR',
+                          onPressed: _toggleDirection,
+                        ),
+                      if (prefs != null)
+                        IconButton(
+                          icon: Icon(
+                            prefs.fitMode == PageFitMode.fitWidth ? Icons.fit_screen : Icons.aspect_ratio,
+                            color: Colors.white,
+                          ),
+                          tooltip: prefs.fitMode == PageFitMode.fitWidth ? 'Fit Width' : 'Fit Page',
+                          onPressed: _toggleFitMode,
+                        ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(

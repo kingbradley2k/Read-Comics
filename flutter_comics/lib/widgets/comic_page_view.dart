@@ -5,29 +5,41 @@ import 'package:pdf_render/pdf_render_widgets.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../models/comic_models.dart';
+import '../models/reading_preferences.dart';
 import '../services/comic_page_extractor.dart';
 
 /// Renders a single comic page. Handles images (memory/file) and PDF.
 class ComicPageView extends StatelessWidget {
   final ComicChapter chapter;
   final int pageIndex;
+  final PageFitMode fitMode;
 
-  const ComicPageView({super.key, required this.chapter, required this.pageIndex});
+  const ComicPageView({
+    super.key,
+    required this.chapter,
+    required this.pageIndex,
+    this.fitMode = PageFitMode.fitPage,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (chapter.format == ComicFormat.pdf) {
-      return _PdfPage(chapter: chapter, pageIndex: pageIndex);
+      return _PdfPage(chapter: chapter, pageIndex: pageIndex, fitMode: fitMode);
     }
-    return _ImagePage(chapter: chapter, pageIndex: pageIndex);
+    return _ImagePage(chapter: chapter, pageIndex: pageIndex, fitMode: fitMode);
   }
 }
 
 class _ImagePage extends StatefulWidget {
   final ComicChapter chapter;
   final int pageIndex;
+  final PageFitMode fitMode;
 
-  const _ImagePage({required this.chapter, required this.pageIndex});
+  const _ImagePage({
+    required this.chapter,
+    required this.pageIndex,
+    required this.fitMode,
+  });
 
   @override
   State<_ImagePage> createState() => _ImagePageState();
@@ -48,7 +60,8 @@ class _ImagePageState extends State<_ImagePage> {
   @override
   void didUpdateWidget(covariant _ImagePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.pageIndex != widget.pageIndex || oldWidget.chapter.id != widget.chapter.id) {
+    if (oldWidget.pageIndex != widget.pageIndex ||
+        oldWidget.chapter.id != widget.chapter.id) {
       _load();
     }
   }
@@ -91,6 +104,15 @@ class _ImagePageState extends State<_ImagePage> {
     }
   }
 
+  BoxFit get _boxFit {
+    switch (widget.fitMode) {
+      case PageFitMode.fitWidth:
+        return BoxFit.fitWidth;
+      case PageFitMode.fitPage:
+        return BoxFit.contain;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -110,13 +132,17 @@ class _ImagePageState extends State<_ImagePage> {
     }
 
     final image = _filePath != null
-        ? Image.file(File(_filePath!), fit: BoxFit.contain)
-        : Image.memory(_bytes!, fit: BoxFit.contain);
+        ? Image.file(File(_filePath!), fit: _boxFit)
+        : Image.memory(_bytes!, fit: _boxFit);
 
     return InteractiveViewer(
       minScale: 0.5,
       maxScale: 4.0,
-      child: Center(child: image),
+      child: Center(
+        child: widget.fitMode == PageFitMode.fitWidth
+            ? SizedBox(width: double.infinity, child: image)
+            : image,
+      ),
     );
   }
 }
@@ -124,8 +150,13 @@ class _ImagePageState extends State<_ImagePage> {
 class _PdfPage extends StatelessWidget {
   final ComicChapter chapter;
   final int pageIndex;
+  final PageFitMode fitMode;
 
-  const _PdfPage({required this.chapter, required this.pageIndex});
+  const _PdfPage({
+    required this.chapter,
+    required this.pageIndex,
+    required this.fitMode,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import '../models/comic_models.dart';
 import '../services/comic_library_service.dart';
 import '../widgets/series_thumbnail.dart';
-import 'reader_screen.dart';
+import 'series_detail_screen.dart';
+import 'settings_screen.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
@@ -14,6 +15,15 @@ class LibraryScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Library'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
           Consumer<ComicLibraryService>(
             builder: (context, service, child) {
               if (service.isImporting) {
@@ -74,14 +84,6 @@ class _SeriesCard extends StatelessWidget {
 
   const _SeriesCard({required this.series});
 
-  void _openReader(BuildContext context, ComicChapter chapter) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ReaderScreen(chapter: chapter),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final service = context.read<ComicLibraryService>();
@@ -93,9 +95,11 @@ class _SeriesCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          if (displayChapter != null) {
-            _openReader(context, displayChapter);
-          }
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => SeriesDetailScreen(series: series),
+            ),
+          );
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
