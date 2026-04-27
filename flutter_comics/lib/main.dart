@@ -14,7 +14,7 @@ void main() async {
   Hive.registerAdapter(ComicProgressAdapter());
   await Hive.openBox<ComicChapter>('chapters');
   await Hive.openBox<ComicProgress>('progress');
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -23,14 +23,18 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => ComicLibraryService(),
+      create: (context) {
+        final service = ComicLibraryService();
+        service.init();
+        return service;
+      },
       child: MaterialApp(
         title: 'Read Comics Flutter',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
-        home: LibraryScreen(),
+        home: const LibraryScreen(),
         debugShowCheckedModeBanner: false,
       ),
     );
