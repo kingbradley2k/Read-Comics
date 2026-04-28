@@ -6,15 +6,65 @@ import '../widgets/series_thumbnail.dart';
 import 'series_detail_screen.dart';
 import 'settings_screen.dart';
 
-class LibraryScreen extends StatelessWidget {
+class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
+
+  @override
+  State<LibraryScreen> createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends State<LibraryScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _isSearching = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<ComicSeries> _filterSeries(List<ComicSeries> series) {
+    if (_searchQuery.isEmpty) return series;
+    final query = _searchQuery.toLowerCase();
+    return series
+        .where((s) => s.title.toLowerCase().contains(query))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Library'),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Search comics...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withAlpha(128)),
+                ),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                onChanged: (value) => setState(() => _searchQuery = value),
+              )
+            : const Text('Library'),
         actions: [
+          IconButton(
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            tooltip: _isSearching ? 'Close search' : 'Search',
+            onPressed: () {
+              setState(() {
+                if (_isSearching) {
+                  _isSearching = false;
+                  _searchQuery = '';
+                  _searchController.clear();
+                } else {
+                  _isSearching = true;
+                }
+              });
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: 'Settings',
@@ -55,10 +105,34 @@ class LibraryScreen extends StatelessWidget {
             });
           }
 
-          final series = service.series;
-          if (series.isEmpty) {
+          final allSeries = service.series;
+          final filteredSeries = _filterSeries(allSeries);
+
+          if (allSeries.isEmpty) {
             return const Center(child: Text('No comics. Tap + to import.'));
           }
+
+          if (filteredSeries.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No results for "$_searchQuery"',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Try a different search term',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  ),
+                ],
+              ),
+            );
+          }
+
           return GridView.builder(
             padding: const EdgeInsets.all(16),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -67,9 +141,9 @@ class LibraryScreen extends StatelessWidget {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
             ),
-            itemCount: series.length,
+            itemCount: filteredSeries.length,
             itemBuilder: (context, index) {
-              final comic = series[index];
+              final comic = filteredSeries[index];
               return _SeriesCard(series: comic);
             },
           );
@@ -105,16 +179,10 @@ class _SeriesCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: displayChapter != null
-                  ? SeriesThumbnail(
+              child: SeriesThumbnail(
                       chapter: displayChapter,
                       width: double.infinity,
                       height: double.infinity,
-                    )
-                  : Container(
-                      width: double.infinity,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, size: 48, color: Colors.grey),
                     ),
             ),
             Padding(

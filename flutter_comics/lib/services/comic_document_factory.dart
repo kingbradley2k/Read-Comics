@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
 import '../models/comic_models.dart';
+import 'rar_extractor.dart';
 
 class ComicDocumentFactory {
   static final _imageExts = <String>{
@@ -43,7 +44,7 @@ class ComicDocumentFactory {
           return await _countZipImages(path);
         case ComicFormat.cbr:
         case ComicFormat.rar:
-          return 0; // RAR extraction not yet implemented
+          return await _countRarImages(path);
         case ComicFormat.pdf:
           return 0; // PDF page count not yet implemented
         case ComicFormat.folder:
@@ -63,7 +64,7 @@ class ComicDocumentFactory {
         return await _extractZipImagePaths(path);
       case ComicFormat.cbr:
       case ComicFormat.rar:
-        return []; // TODO: RAR support
+        return await _extractRarImagePaths(path);
       case ComicFormat.pdf:
         return []; // TODO: PDF support
       case ComicFormat.folder:
@@ -113,6 +114,18 @@ class ComicDocumentFactory {
     }
     paths.sort(_naturalSort);
     return paths;
+  }
+
+  static Future<int> _countRarImages(String path) async {
+    final files = await RarExtractor.listFiles(path);
+    return files.where(isImagePath).length;
+  }
+
+  static Future<List<String>> _extractRarImagePaths(String path) async {
+    final files = await RarExtractor.listFiles(path);
+    final names = files.where(isImagePath).toList();
+    names.sort(_naturalSort);
+    return names;
   }
 
   static int _naturalSort(String a, String b) {

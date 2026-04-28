@@ -4,9 +4,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:hive/hive.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../models/comic_models.dart';
 import '../utils/comic_filename_parser.dart';
 import 'comic_document_factory.dart';
+import 'rar_extractor.dart';
 
 class ComicLibraryService extends ChangeNotifier {
   List<ComicChapter> _chapters = [];
@@ -56,6 +58,17 @@ class ComicLibraryService extends ChangeNotifier {
 
   Future<void> pickAndImportFiles() async {
     _lastError = null;
+
+    // Request storage permission on Android before picking files
+    if (Platform.isAndroid) {
+      final status = await Permission.storage.request();
+      if (status.isDenied || status.isPermanentlyDenied) {
+        _lastError = 'Storage permission denied. Enable it in Settings > Apps > Read Comics > Permissions.';
+        notifyListeners();
+        return;
+      }
+    }
+
     _isImporting = true;
     notifyListeners();
 
@@ -63,7 +76,7 @@ class ComicLibraryService extends ChangeNotifier {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
         type: FileType.custom,
-        allowedExtensions: ['cbz', 'cbr', 'zip', 'rar', 'pdf', 'jpg', 'jpeg', 'png'],
+        allowedExtensions: ['cbz', 'cbr', 'zip', 'rar', 'pdf', 'jpg', 'jpeg', 'png', 'webp'],
       );
 
       if (result == null || result.files.isEmpty) {
@@ -77,6 +90,8 @@ class ComicLibraryService extends ChangeNotifier {
           await _importFile(file.path!);
         }
       }
+    } on RarNotAvailableException catch (e) {
+      _lastError = e.toString();
     } catch (e) {
       _lastError = 'Import failed: $e';
     } finally {

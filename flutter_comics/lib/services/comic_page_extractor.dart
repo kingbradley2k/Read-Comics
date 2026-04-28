@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../models/comic_models.dart';
 import 'comic_document_factory.dart';
+import 'rar_extractor.dart';
 
 /// Extracts raw image bytes for a specific page from various comic sources.
 class ComicPageExtractor {
@@ -22,7 +23,7 @@ class ComicPageExtractor {
         return _getZipPageBytes(absolutePath, pageIndex);
       case ComicFormat.cbr:
       case ComicFormat.rar:
-        return null; // TODO: RAR support
+        return _getRarPageBytes(absolutePath, pageIndex);
       case ComicFormat.pdf:
         return null; // Handled separately by pdf_render
       case ComicFormat.folder:
@@ -72,6 +73,19 @@ class ComicPageExtractor {
       final paths = await ComicDocumentFactory.extractImagePaths(folderPath, ComicFormat.folder);
       if (pageIndex < 0 || pageIndex >= paths.length) return null;
       return File(paths[pageIndex]).readAsBytes();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<Uint8List?> _getRarPageBytes(String rarPath, int pageIndex) async {
+    try {
+      final names = await ComicDocumentFactory.extractImagePaths(rarPath, ComicFormat.cbr);
+      if (pageIndex < 0 || pageIndex >= names.length) return null;
+      return await RarExtractor.extractFileBytes(rarPath, names[pageIndex]);
+    } on RarNotAvailableException catch (e) {
+      // Re-throw so the UI can show a helpful message
+      rethrow;
     } catch (_) {
       return null;
     }

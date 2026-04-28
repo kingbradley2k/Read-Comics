@@ -39,7 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
-          _SectionHeader(title: 'Appearance'),
+          const _SectionHeader(title: 'Appearance'),
           SwitchListTile(
             title: const Text('Use System Theme'),
             subtitle: const Text('Follow device dark/light mode'),
@@ -59,7 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
           const Divider(),
-          _SectionHeader(title: 'Reading Defaults'),
+          const _SectionHeader(title: 'Reading Defaults'),
           ListTile(
             title: const Text('Reading Direction'),
             subtitle: Text(prefs.direction == ReadingDirection.leftToRight ? 'Left to Right' : 'Right to Left'),
@@ -73,7 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () => _showFitModePicker(context, prefs),
           ),
           const Divider(),
-          _SectionHeader(title: 'Library'),
+          const _SectionHeader(title: 'Library'),
           ListTile(
             title: const Text('Clear All Data'),
             subtitle: const Text('Delete all imported comics and progress'),
